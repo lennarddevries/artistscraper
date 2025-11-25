@@ -1,6 +1,6 @@
 [project]
 name = "artistscraper"
-version = "0.1.0"
+version = "0.0.0"
 description = "Fetch artists from YouTube Music and Spotify with MusicBrainz IDs"
 authors = [
     {name = "lennarddevries",email = "lennard.devries@me.com"}
@@ -37,7 +37,15 @@ Issues = "https://github.com/lennarddevries/artistscraper/issues"
 [project.scripts]
 artistscraper = "artistscraper.__main__:cli_main"
 
+[tool.semantic_release]
+version_toml = "pyproject.toml"
+branch = "main"
+changelog_file = "CHANGELOG.md"
+build_command = "pip install poetry && poetry build"
+dist_path = "dist/"
+upload_to_pypi = true
+upload_to_release = true
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core>=1.0.0"]
 build-backend = "poetry.core.masonry.api"
