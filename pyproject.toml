@@ -64,7 +64,7 @@ module = "spotipy.oauth2"
 ignore_missing_imports = true
 
 [tool.semantic_release]
-version_toml = "pyproject.toml"
+version_toml = ["pyproject.toml:project.version"]
 branch = "main"
 changelog_file = "CHANGELOG.md"
 build_command = "pip install poetry && poetry build"
