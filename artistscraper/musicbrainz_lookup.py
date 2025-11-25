@@ -3,8 +3,8 @@
 import logging
 import time
 from typing import Optional, Tuple
-import musicbrainzngs
 
+import musicbrainzngs
 
 logger = logging.getLogger(__name__)
 
@@ -20,12 +20,10 @@ class MusicBrainzLookup:
         """
         self.user_agent = user_agent
         musicbrainzngs.set_useragent(
-            app="artistscraper",
-            version="0.1.0",
-            contact=user_agent
+            app="artistscraper", version="0.1.0", contact=user_agent
         )
         # Rate limiting: MusicBrainz allows 1 request per second
-        self.last_request_time = 0
+        self.last_request_time: float = 0.0
         self.min_request_interval = 1.0
 
     def _rate_limit(self) -> None:
@@ -55,16 +53,14 @@ class MusicBrainzLookup:
 
             # Search for the artist
             result = musicbrainzngs.search_artists(
-                artist=artist_name,
-                limit=10,
-                strict=False
+                artist=artist_name, limit=10, strict=False
             )
 
-            if not result or 'artist-list' not in result:
+            if not result or "artist-list" not in result:
                 logger.debug(f"No results found for: {artist_name}")
                 return None
 
-            artists = result['artist-list']
+            artists = result["artist-list"]
 
             if not artists:
                 logger.debug(f"Empty artist list for: {artist_name}")
@@ -76,8 +72,8 @@ class MusicBrainzLookup:
 
             for artist in artists:
                 # Get the score (0-100, where 100 is exact match)
-                score = int(artist.get('ext:score', 0))
-                artist_mb_name = artist.get('name', '')
+                score = int(artist.get("ext:score", 0))
+                artist_mb_name = artist.get("name", "")
 
                 # Prefer exact matches or very high scores
                 if score > best_score:
@@ -91,12 +87,16 @@ class MusicBrainzLookup:
 
             # Only accept matches with score >= 90 for good quality results
             if best_match and best_score >= 90:
-                mb_id = best_match.get('id')
+                mb_id = best_match.get("id")
                 if mb_id:
-                    logger.debug(f"Found MusicBrainz ID for {artist_name}: {mb_id} (score: {best_score})")
+                    logger.debug(
+                        f"Found MusicBrainz ID for {artist_name}: {mb_id} (score: {best_score})"
+                    )
                     return f"lidarr:{mb_id}"
 
-            logger.debug(f"No good match found for {artist_name} (best score: {best_score})")
+            logger.debug(
+                f"No good match found for {artist_name} (best score: {best_score})"
+            )
             return None
 
         except musicbrainzngs.NetworkError as e:
@@ -109,7 +109,9 @@ class MusicBrainzLookup:
             logger.error(f"Unexpected error looking up {artist_name}: {e}")
             return None
 
-    def lookup_multiple_artists(self, artist_names: set[str]) -> dict[str, Optional[str]]:
+    def lookup_multiple_artists(
+        self, artist_names: set[str]
+    ) -> dict[str, Optional[str]]:
         """Look up MusicBrainz IDs for multiple artists.
 
         Args:
@@ -130,5 +132,7 @@ class MusicBrainzLookup:
             mb_id = self.lookup_artist(artist_name)
             results[artist_name] = mb_id
 
-        logger.info(f"Completed MusicBrainz lookups: {sum(1 for v in results.values() if v is not None)}/{total} found")
+        logger.info(
+            f"Completed MusicBrainz lookups: {sum(1 for v in results.values() if v is not None)}/{total} found"
+        )
         return results

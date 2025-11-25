@@ -5,7 +5,6 @@ import logging
 from pathlib import Path
 from typing import Dict, Optional
 
-
 logger = logging.getLogger(__name__)
 
 
@@ -38,12 +37,14 @@ class CSVExporter:
         """Open files and write headers."""
         try:
             logger.info(f"Opening {self.csv_file} for writing")
-            self.csv_f = open(self.csv_file, 'w', newline='', encoding='utf-8')
+            self.csv_f = open(self.csv_file, "w", newline="", encoding="utf-8")
             self.csv_writer = csv.writer(self.csv_f)
-            self.csv_writer.writerow(['Artist Name', 'MusicBrainz ID', 'Source', 'Play Count'])
+            self.csv_writer.writerow(
+                ["Artist Name", "MusicBrainz ID", "Source", "Play Count"]
+            )
 
             logger.info(f"Opening {self.skipped_log} for writing")
-            self.skipped_f = open(self.skipped_log, 'w', encoding='utf-8')
+            self.skipped_f = open(self.skipped_log, "w", encoding="utf-8")
             self.skipped_f.write("# Artists without MusicBrainz IDs\n")
 
         except Exception as e:
@@ -54,12 +55,16 @@ class CSVExporter:
         """Close files and log summary."""
         if self.csv_f:
             self.csv_f.close()
-            logger.info(f"Successfully exported {self.exported_count} artists to {self.csv_file}")
+            logger.info(
+                f"Successfully exported {self.exported_count} artists to {self.csv_file}"
+            )
         if self.skipped_f:
             # Write total count at the end
             self.skipped_f.write(f"\n# Total: {self.skipped_count}\n")
             self.skipped_f.close()
-            logger.info(f"Successfully logged {self.skipped_count} skipped artists to {self.skipped_log}")
+            logger.info(
+                f"Successfully logged {self.skipped_count} skipped artists to {self.skipped_log}"
+            )
 
     def export_artist(self, artist_name: str, mb_id: str, source: str, play_count: int):
         """Write a single artist to the CSV file.

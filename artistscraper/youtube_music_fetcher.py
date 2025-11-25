@@ -1,10 +1,10 @@
 """YouTube Music artist fetcher using YouTube Data API v3."""
 
-import logging
 import json
-import requests
-from typing import Set
+import logging
 from pathlib import Path
+
+import requests
 
 logger = logging.getLogger(__name__)
 
@@ -14,7 +14,12 @@ YOUTUBE_API_BASE = "https://www.googleapis.com/youtube/v3"
 class YouTubeMusicFetcher:
     """Fetch artists from YouTube Music using YouTube Data API v3."""
 
-    def __init__(self, auth_file: str, client_id: str = None, client_secret: str = None):
+    def __init__(
+        self,
+        auth_file: str,
+        client_id: str | None = None,
+        client_secret: str | None = None,
+    ):
         """Initialize YouTube Music fetcher.
 
         Args:
@@ -46,7 +51,7 @@ class YouTubeMusicFetcher:
         try:
             with open(auth_path) as f:
                 token_data = json.load(f)
-                self.access_token = token_data.get('access_token')
+                self.access_token = token_data.get("access_token")
 
             if not self.access_token:
                 logger.error("No access token found in auth file")
@@ -95,7 +100,7 @@ class YouTubeMusicFetcher:
                     return artist
         return None
 
-    def get_artists_from_liked_songs(self, play_counts: dict = None) -> Set[str]:
+    def get_artists_from_liked_songs(self, play_counts: dict | None = None) -> set[str]:
         """Get artists from liked songs/videos.
 
         Args:
@@ -118,11 +123,7 @@ class YouTubeMusicFetcher:
             # Get liked videos (this includes liked music)
             page_token = None
             while True:
-                params = {
-                    "part": "snippet",
-                    "myRating": "like",
-                    "maxResults": 50
-                }
+                params = {"part": "snippet", "myRating": "like", "maxResults": 50}
                 if page_token:
                     params["pageToken"] = page_token
 
@@ -147,12 +148,18 @@ class YouTubeMusicFetcher:
                     # Also consider channel title as potential artist
                     # (many music channels are named after the artist)
                     if channel_title and "VEVO" in channel_title.upper():
-                        # Extract artist name from VEVO channels (e.g., "Taylor SwiftVEVO")
-                        artist_name = channel_title.replace("VEVO", "").replace("Vevo", "").strip()
+                        # Extract artist name from VEVO channels
+                        artist_name = (
+                            channel_title.replace("VEVO", "")
+                            .replace("Vevo", "")
+                            .strip()
+                        )
                         if artist_name:
                             artists.add(artist_name)
                             if play_counts is not None:
-                                play_counts[artist_name] = play_counts.get(artist_name, 0) + 1
+                                play_counts[artist_name] = (
+                                    play_counts.get(artist_name, 0) + 1
+                                )
 
                 page_token = data.get("nextPageToken")
                 if not page_token:
@@ -164,7 +171,7 @@ class YouTubeMusicFetcher:
 
         return artists
 
-    def get_subscribed_artists(self) -> Set[str]:
+    def get_subscribed_artists(self) -> set[str]:
         """Get subscribed/followed artists (YouTube channel subscriptions).
 
         Returns:
@@ -180,11 +187,7 @@ class YouTubeMusicFetcher:
 
             page_token = None
             while True:
-                params = {
-                    "part": "snippet",
-                    "mine": "true",
-                    "maxResults": 50
-                }
+                params = {"part": "snippet", "mine": "true", "maxResults": 50}
                 if page_token:
                     params["pageToken"] = page_token
 
@@ -200,19 +203,24 @@ class YouTubeMusicFetcher:
                     channel_params = {
                         "part": "snippet,topicDetails",
                         "id": ",".join(channel_ids),
-                        "maxResults": 50
+                        "maxResults": 50,
                     }
                     channel_data = self._make_request("channels", channel_params)
 
                     for item in channel_data.get("items", []):
                         topic_details = item.get("topicDetails", {})
                         topic_ids = topic_details.get("topicIds", [])
-                        
+
                         # '/m/04rlf' is the Topic ID for Music
                         if "/m/04rlf" in topic_ids:
                             channel_title = item["snippet"]["title"]
                             # Clean up VEVO and other suffixes
-                            artist_name = channel_title.replace("VEVO", "").replace("Vevo", "").replace("Official", "").strip()
+                            artist_name = (
+                                channel_title.replace("VEVO", "")
+                                .replace("Vevo", "")
+                                .replace("Official", "")
+                                .strip()
+                            )
                             if artist_name:
                                 artists.add(artist_name)
 
@@ -226,7 +234,7 @@ class YouTubeMusicFetcher:
 
         return artists
 
-    def get_artists_from_playlists(self, play_counts: dict = None) -> Set[str]:
+    def get_artists_from_playlists(self, play_counts: dict | None = None) -> set[str]:
         """Get artists from all playlists.
 
         Args:
@@ -251,11 +259,7 @@ class YouTubeMusicFetcher:
             playlist_ids = []
 
             while True:
-                params = {
-                    "part": "id,snippet",
-                    "mine": "true",
-                    "maxResults": 50
-                }
+                params = {"part": "id,snippet", "mine": "true", "maxResults": 50}
                 if page_token:
                     params["pageToken"] = page_token
 
@@ -279,17 +283,20 @@ class YouTubeMusicFetcher:
                         playlist_items_params = {
                             "part": "snippet",
                             "playlistId": playlist_id,
-                            "maxResults": 50
+                            "maxResults": 50,
                         }
                         if page_token:
                             playlist_items_params["pageToken"] = page_token
 
-                        playlist_items_data = self._make_request("playlistItems", playlist_items_params)
-                        
+                        playlist_items_data = self._make_request(
+                            "playlistItems", playlist_items_params
+                        )
+
                         video_ids = [
                             item["snippet"]["resourceId"]["videoId"]
                             for item in playlist_items_data.get("items", [])
-                            if "videoId" in item.get("snippet", {}).get("resourceId", {})
+                            if "videoId"
+                            in item.get("snippet", {}).get("resourceId", {})
                         ]
 
                         if video_ids:
@@ -297,7 +304,7 @@ class YouTubeMusicFetcher:
                             video_params = {
                                 "part": "snippet",
                                 "id": ",".join(video_ids),
-                                "maxResults": 50
+                                "maxResults": 50,
                             }
                             video_data = self._make_request("videos", video_params)
 
@@ -315,15 +322,23 @@ class YouTubeMusicFetcher:
                                 if artist:
                                     artists.add(artist)
                                     if play_counts is not None:
-                                        play_counts[artist] = play_counts.get(artist, 0) + 1
+                                        play_counts[artist] = (
+                                            play_counts.get(artist, 0) + 1
+                                        )
 
                                 # Check channel title for VEVO artists
                                 if channel_title and "VEVO" in channel_title.upper():
-                                    artist_name = channel_title.replace("VEVO", "").replace("Vevo", "").strip()
+                                    artist_name = (
+                                        channel_title.replace("VEVO", "")
+                                        .replace("Vevo", "")
+                                        .strip()
+                                    )
                                     if artist_name:
                                         artists.add(artist_name)
                                         if play_counts is not None:
-                                            play_counts[artist_name] = play_counts.get(artist_name, 0) + 1
+                                            play_counts[artist_name] = (
+                                                play_counts.get(artist_name, 0) + 1
+                                            )
 
                         page_token = playlist_items_data.get("nextPageToken")
                         if not page_token:
@@ -339,7 +354,7 @@ class YouTubeMusicFetcher:
 
         return artists
 
-    def get_all_artists(self, play_counts: dict = None) -> Set[str]:
+    def get_all_artists(self, play_counts: dict | None = None) -> set[str]:
         """Get all unique artists from all sources.
 
         Args:

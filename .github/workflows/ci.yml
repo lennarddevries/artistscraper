@@ -1,0 +1,31 @@
+name: Quality Control
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  quality:
+    name: Quality Control
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.12"
+      - name: Install Poetry
+        run: pip install poetry
+      - name: Install dependencies
+        run: poetry install
+      - name: Run ruff
+        run: poetry run ruff .
+      - name: Run black
+        run: poetry run black --check .
+      - name: Run mypy
+        run: poetry run mypy .

@@ -1,11 +1,12 @@
 """Lidarr API client."""
 
 import logging
-from typing import Dict, Optional, List
+from typing import Dict, List, Optional
+
 import requests
 
 # Suppress requests/urllib3 debug logs
-logging.getLogger('urllib3').setLevel(logging.WARNING)
+logging.getLogger("urllib3").setLevel(logging.WARNING)
 
 logger = logging.getLogger(__name__)
 
@@ -20,13 +21,12 @@ class LidarrClient:
             url: Lidarr instance URL (e.g., http://localhost:8686)
             api_key: Lidarr API key
         """
-        self.url = url.rstrip('/')
+        self.url = url.rstrip("/")
         self.api_key = api_key
         self.session = requests.Session()
-        self.session.headers.update({
-            'X-Api-Key': api_key,
-            'Content-Type': 'application/json'
-        })
+        self.session.headers.update(
+            {"X-Api-Key": api_key, "Content-Type": "application/json"}
+        )
 
     def test_connection(self) -> bool:
         """Test connection to Lidarr.
@@ -97,8 +97,7 @@ class LidarrClient:
         try:
             # Search using foreign ID (MusicBrainz ID)
             response = self.session.get(
-                f"{self.url}/api/v1/search",
-                params={'term': f"lidarr:{musicbrainz_id}"}
+                f"{self.url}/api/v1/search", params={"term": f"lidarr:{musicbrainz_id}"}
             )
             response.raise_for_status()
             results = response.json()
@@ -126,7 +125,7 @@ class LidarrClient:
             artists = response.json()
 
             for artist in artists:
-                if artist.get('foreignArtistId') == musicbrainz_id:
+                if artist.get("foreignArtistId") == musicbrainz_id:
                     return True
 
             return False
@@ -141,7 +140,7 @@ class LidarrClient:
         quality_profile_id: int,
         metadata_profile_id: int,
         monitored: bool = True,
-        search_for_missing: bool = False
+        search_for_missing: bool = False,
     ) -> bool:
         """Add an artist to Lidarr.
 
@@ -159,22 +158,19 @@ class LidarrClient:
         try:
             # Prepare the artist data for adding
             add_data = {
-                'artistName': artist_data['artistName'],
-                'foreignArtistId': artist_data['foreignArtistId'],
-                'qualityProfileId': quality_profile_id,
-                'metadataProfileId': metadata_profile_id,
-                'rootFolderPath': root_folder_path,
-                'monitored': monitored,
-                'addOptions': {
-                    'monitor': 'all',
-                    'searchForMissingAlbums': search_for_missing
-                }
+                "artistName": artist_data["artistName"],
+                "foreignArtistId": artist_data["foreignArtistId"],
+                "qualityProfileId": quality_profile_id,
+                "metadataProfileId": metadata_profile_id,
+                "rootFolderPath": root_folder_path,
+                "monitored": monitored,
+                "addOptions": {
+                    "monitor": "all",
+                    "searchForMissingAlbums": search_for_missing,
+                },
             }
 
-            response = self.session.post(
-                f"{self.url}/api/v1/artist",
-                json=add_data
-            )
+            response = self.session.post(f"{self.url}/api/v1/artist", json=add_data)
             response.raise_for_status()
 
             logger.info(f"Successfully added artist: {artist_data['artistName']}")
@@ -182,12 +178,16 @@ class LidarrClient:
 
         except requests.exceptions.HTTPError as e:
             if e.response.status_code == 400:
-                logger.warning(f"Artist already exists or invalid data: {artist_data.get('artistName', 'Unknown')}")
+                logger.warning(
+                    f"Artist already exists or invalid data: {artist_data.get('artistName', 'Unknown')}"
+                )
             else:
                 logger.error(f"HTTP error adding artist: {e}")
             return False
         except Exception as e:
-            logger.error(f"Error adding artist {artist_data.get('artistName', 'Unknown')}: {e}")
+            logger.error(
+                f"Error adding artist {artist_data.get('artistName', 'Unknown')}: {e}"
+            )
             return False
 
     def add_artists_from_csv(self, artist_data: Dict[str, str]) -> tuple[int, int]:
@@ -213,9 +213,9 @@ class LidarrClient:
             return 0, 0
 
         # Use the first available options (user can configure these in Lidarr)
-        root_folder_path = root_folders[0]['path']
-        quality_profile_id = quality_profiles[0]['id']
-        metadata_profile_id = metadata_profiles[0]['id']
+        root_folder_path = root_folders[0]["path"]
+        quality_profile_id = quality_profiles[0]["id"]
+        metadata_profile_id = metadata_profiles[0]["id"]
 
         logger.info(f"Using root folder: {root_folder_path}")
         logger.info(f"Using quality profile: {quality_profiles[0]['name']}")
@@ -232,7 +232,7 @@ class LidarrClient:
                 continue
 
             # Remove 'lidarr:' prefix if present
-            mb_id_clean = mb_id.replace('lidarr:', '')
+            mb_id_clean = mb_id.replace("lidarr:", "")
 
             # Check if artist already exists
             if self.artist_exists(mb_id_clean):
@@ -255,7 +255,7 @@ class LidarrClient:
                 quality_profile_id,
                 metadata_profile_id,
                 monitored=True,
-                search_for_missing=False
+                search_for_missing=False,
             ):
                 added_count += 1
             else:
