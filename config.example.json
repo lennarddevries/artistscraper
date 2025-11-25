@@ -5,7 +5,9 @@
     "refresh_token": "your_spotify_refresh_token_here"
   },
   "youtube_music": {
-    "auth_file": "ytmusic_auth.json"
+    "auth_file": "ytmusic_auth.json",
+    "client_id": "your_google_client_id_here (optional)",
+    "client_secret": "your_google_client_secret_here (optional)"
   },
   "lidarr": {
     "url": "http://localhost:8686",

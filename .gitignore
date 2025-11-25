@@ -1,6 +1,7 @@
 # Configuration files with secrets
 config.json
 ytmusic_auth.json
+oauth.json
 
 # Python
 __pycache__/
@@ -20,18 +21,52 @@ parts/
 sdist/
 var/
 wheels/
+pip-wheel-metadata/
+share/python-wheels/
 *.egg-info/
 .installed.cfg
 *.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+
+# Installer logs
+pip-log.txt
+pip-delete-this-directory.txt
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+
+# Type checking
+.mypy_cache/
+.dmypy.json
+dmypy.json
+.pytype/
 
 # Virtual environments
 venv/
 ENV/
 env/
+.venv
 
 # Output files
 *.csv
 *.log
+artists.csv
+skipped_artists.log
 
 # IDE
 .vscode/
@@ -39,10 +74,22 @@ env/
 *.swp
 *.swo
 *~
+.project
+.pydevproject
+.settings/
 
 # OS
 .DS_Store
 Thumbs.db
-ytmusic_auth.json
-.cache
-.claude
+*.bak
+
+# Claude Code
+.claude/
+
+# Jupyter Notebook
+.ipynb_checkpoints
+
+# Test files (development only)
+test_*.py
+check_*.py
+debug_*.py

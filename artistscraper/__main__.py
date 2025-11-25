@@ -356,6 +356,11 @@ def import_csv(
         "-c",
         help="Path to configuration file"
     ),
+    min_plays: Optional[int] = typer.Option(
+        None,
+        "--min-plays",
+        help="Only import artists with at least this many plays"
+    ),
     verbose: bool = typer.Option(
         False,
         "--verbose",
@@ -409,6 +414,8 @@ def import_csv(
         raise typer.Exit(1)
 
     artists_to_add = {}
+    total_in_csv = 0
+    filtered_out = 0
 
     try:
         with open(csv_path, 'r', encoding='utf-8') as f:
@@ -419,16 +426,43 @@ def import_csv(
                 console.print("[red]✗[/red] CSV must have 'Artist Name' and 'MusicBrainz ID' columns", style="bold")
                 raise typer.Exit(1)
 
+            # Check if Play Count column exists when filtering is requested
+            has_play_count = 'Play Count' in reader.fieldnames
+            if min_plays is not None and not has_play_count:
+                console.print("[red]✗[/red] CSV must have 'Play Count' column when using --min-plays filter", style="bold")
+                raise typer.Exit(1)
+
             for row in reader:
                 artist_name = row['Artist Name']
                 mb_id = row['MusicBrainz ID']
 
                 if artist_name and mb_id:
+                    total_in_csv += 1
+
+                    # Check play count filter if specified
+                    if min_plays is not None:
+                        try:
+                            play_count = int(row.get('Play Count', 0))
+                            if play_count < min_plays:
+                                filtered_out += 1
+                                if verbose:
+                                    console.print(f"[dim]Filtered out: {artist_name} ({play_count} plays < {min_plays})[/dim]")
+                                continue
+                        except (ValueError, TypeError):
+                            # If play count is invalid, skip this artist
+                            filtered_out += 1
+                            if verbose:
+                                console.print(f"[dim]Filtered out: {artist_name} (invalid play count)[/dim]")
+                            continue
+
                     # Remove 'lidarr:' prefix if present
                     mb_id_clean = mb_id.replace('lidarr:', '')
                     artists_to_add[artist_name] = mb_id_clean
 
-        console.print(f"[green]✓[/green] Loaded {len(artists_to_add)} artists from CSV", style="bold")
+        if min_plays is not None:
+            console.print(f"[green]✓[/green] Loaded {len(artists_to_add)} artists from CSV (filtered out {filtered_out} with < {min_plays} plays)", style="bold")
+        else:
+            console.print(f"[green]✓[/green] Loaded {len(artists_to_add)} artists from CSV", style="bold")
 
     except Exception as e:
         console.print(f"[red]✗[/red] Error reading CSV file: {e}", style="bold")
@@ -527,7 +561,13 @@ def import_csv(
     summary_table.add_column("Metric", style="magenta")
     summary_table.add_column("Count", justify="right", style="green")
 
-    summary_table.add_row("Total in CSV", str(len(artists_to_add)))
+    if min_plays is not None:
+        summary_table.add_row("Total in CSV", str(total_in_csv))
+        summary_table.add_row("Filtered out (< {} plays)".format(min_plays), str(filtered_out), style="yellow")
+        summary_table.add_row("After filtering", str(len(artists_to_add)))
+    else:
+        summary_table.add_row("Total in CSV", str(len(artists_to_add)))
+
     summary_table.add_row("Added to Lidarr", str(added))
     summary_table.add_row("Already in Lidarr", str(already_exists))
     if failed > 0:
