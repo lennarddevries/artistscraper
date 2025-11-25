@@ -1,6 +1,6 @@
 [project]
 name = "artistscraper"
-version = "1.0.2"
+version = "1.0.3"
 description = "Fetch artists from YouTube Music and Spotify with MusicBrainz IDs"
 authors = [
     {name = "lennarddevries",email = "lennard.devries@me.com"}
