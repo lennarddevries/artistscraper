@@ -30,7 +30,7 @@ app = typer.Typer(
 console = Console()
 
 
-@app.command()
+@app.command(name="scrape")
 def main(
     config_file: str = typer.Option(
         "config.json",
@@ -333,6 +333,205 @@ def main(
     # Final success message
     console.print(Panel.fit(
         "[bold green]✓ Artist Scraper completed successfully![/bold green]",
+        border_style="green"
+    ))
+
+
+@app.command(name="import")
+def import_csv(
+    csv_file: str = typer.Argument(
+        ...,
+        help="Path to CSV file containing artists"
+    ),
+    config_file: str = typer.Option(
+        "config.json",
+        "--config",
+        "-c",
+        help="Path to configuration file"
+    ),
+    verbose: bool = typer.Option(
+        False,
+        "--verbose",
+        "-v",
+        help="Enable verbose output"
+    )
+) -> None:
+    """Import artists from CSV and add them to Lidarr."""
+
+    # Configure logging based on verbose flag
+    if verbose:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(name)s - %(message)s",
+            handlers=[RichHandler(console=console, show_time=False, show_path=False)]
+        )
+        logging.getLogger("artistscraper").setLevel(logging.DEBUG)
+    else:
+        logging.basicConfig(
+            level=logging.WARNING,
+            format="%(message)s",
+            handlers=[RichHandler(console=console, show_time=False, show_path=False)]
+        )
+
+    console.print(Panel.fit(
+        "[bold magenta]Artist Scraper - Import to Lidarr[/bold magenta]\n"
+        "Import artists from CSV to Lidarr",
+        border_style="magenta"
+    ))
+    console.print()
+
+    # Load configuration
+    try:
+        config = Config(config_file)
+        console.print("[green]✓[/green] Configuration loaded successfully", style="bold")
+    except FileNotFoundError as e:
+        console.print(f"[red]✗[/red] {e}", style="bold")
+        raise typer.Exit(1)
+    except Exception as e:
+        console.print(f"[red]✗[/red] Error loading configuration: {e}", style="bold")
+        raise typer.Exit(1)
+
+    console.print()
+
+    # Read CSV file
+    import csv
+    csv_path = Path(csv_file)
+
+    if not csv_path.exists():
+        console.print(f"[red]✗[/red] CSV file not found: {csv_file}", style="bold")
+        raise typer.Exit(1)
+
+    artists_to_add = {}
+
+    try:
+        with open(csv_path, 'r', encoding='utf-8') as f:
+            reader = csv.DictReader(f)
+
+            # Check if required columns exist
+            if 'Artist Name' not in reader.fieldnames or 'MusicBrainz ID' not in reader.fieldnames:
+                console.print("[red]✗[/red] CSV must have 'Artist Name' and 'MusicBrainz ID' columns", style="bold")
+                raise typer.Exit(1)
+
+            for row in reader:
+                artist_name = row['Artist Name']
+                mb_id = row['MusicBrainz ID']
+
+                if artist_name and mb_id:
+                    # Remove 'lidarr:' prefix if present
+                    mb_id_clean = mb_id.replace('lidarr:', '')
+                    artists_to_add[artist_name] = mb_id_clean
+
+        console.print(f"[green]✓[/green] Loaded {len(artists_to_add)} artists from CSV", style="bold")
+
+    except Exception as e:
+        console.print(f"[red]✗[/red] Error reading CSV file: {e}", style="bold")
+        raise typer.Exit(1)
+
+    if not artists_to_add:
+        console.print("[yellow]⚠[/yellow]  No artists with MusicBrainz IDs found in CSV", style="bold")
+        raise typer.Exit(0)
+
+    console.print()
+
+    # Connect to Lidarr
+    console.print(Panel(
+        "[bold magenta]Adding artists to Lidarr[/bold magenta]",
+        border_style="magenta"
+    ))
+    console.print()
+
+    lidarr_client = LidarrClient(config.lidarr_url, config.lidarr_api_key)
+
+    with console.status("[magenta]Connecting to Lidarr...", spinner="dots"):
+        if not lidarr_client.test_connection():
+            console.print("[red]✗[/red] Failed to connect to Lidarr", style="bold")
+            raise typer.Exit(1)
+
+    console.print("[green]✓[/green] Connected to Lidarr", style="bold")
+    console.print()
+
+    # Add artists to Lidarr
+    with Progress(
+        SpinnerColumn(),
+        TextColumn("[progress.description]{task.description}"),
+        BarColumn(),
+        TaskProgressColumn(),
+        console=console
+    ) as progress:
+
+        task = progress.add_task(
+            "[magenta]Adding artists to Lidarr...",
+            total=len(artists_to_add)
+        )
+
+        added = 0
+        already_exists = 0
+        failed = 0
+
+        for artist_name, mb_id in sorted(artists_to_add.items()):
+            if lidarr_client.artist_exists(mb_id):
+                already_exists += 1
+            else:
+                artist_search_data = lidarr_client.search_artist(mb_id)
+                if artist_search_data:
+                    root_folders = lidarr_client.get_root_folders()
+                    quality_profiles = lidarr_client.get_quality_profiles()
+                    metadata_profiles = lidarr_client.get_metadata_profiles()
+
+                    if root_folders and quality_profiles and metadata_profiles:
+                        if lidarr_client.add_artist(
+                            artist_search_data,
+                            root_folders[0]['path'],
+                            quality_profiles[0]['id'],
+                            metadata_profiles[0]['id'],
+                            monitored=True,
+                            search_for_missing=False
+                        ):
+                            added += 1
+                        else:
+                            failed += 1
+                            if verbose:
+                                console.print(f"[red]✗[/red] Failed to add: {artist_name}", style="dim")
+                    else:
+                        failed += 1
+                        if verbose:
+                            console.print(f"[red]✗[/red] Missing Lidarr configuration for: {artist_name}", style="dim")
+                else:
+                    failed += 1
+                    if verbose:
+                        console.print(f"[red]✗[/red] Not found in Lidarr: {artist_name}", style="dim")
+
+            progress.update(
+                task,
+                advance=1,
+                description=f"[magenta]Adding to Lidarr... ({artist_name[:40]})"
+            )
+
+    console.print()
+    console.print(f"[green]✓[/green] Added: {added} artists", style="bold")
+    console.print(f"[cyan]ℹ[/cyan] Already exists: {already_exists} artists", style="bold")
+    if failed > 0:
+        console.print(f"[red]✗[/red] Failed: {failed} artists", style="bold")
+
+    console.print()
+
+    # Create summary table
+    summary_table = Table(title="Import Summary", show_header=True, header_style="bold magenta")
+    summary_table.add_column("Metric", style="magenta")
+    summary_table.add_column("Count", justify="right", style="green")
+
+    summary_table.add_row("Total in CSV", str(len(artists_to_add)))
+    summary_table.add_row("Added to Lidarr", str(added))
+    summary_table.add_row("Already in Lidarr", str(already_exists))
+    if failed > 0:
+        summary_table.add_row("Failed", str(failed), style="red")
+
+    console.print(summary_table)
+    console.print()
+
+    # Final success message
+    console.print(Panel.fit(
+        "[bold green]✓ Import completed![/bold green]",
         border_style="green"
     ))
 
