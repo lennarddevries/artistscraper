@@ -28,4 +28,6 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           REPOSITORY_USERNAME: __token__
           REPOSITORY_PASSWORD: ${{ secrets.PYPI_TOKEN }}
-        run: semantic-release --verbose publish
+        run: |
+          semantic-release --verbose version
+          semantic-release --verbose publish
