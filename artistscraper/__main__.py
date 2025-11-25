@@ -2,6 +2,7 @@
 
 import sys
 import logging
+import csv
 from pathlib import Path
 from typing import Optional
 
@@ -182,67 +183,49 @@ def main(
     ))
     console.print()
 
-    # Look up MusicBrainz IDs
-    artist_data = {}
+    # Look up MusicBrainz IDs and export incrementally
+    exported_count = 0
+    skipped_count = 0
 
-    if skip_musicbrainz:
-        console.print("[yellow]⚠[/yellow]  Skipping MusicBrainz lookup", style="bold")
-        for artist in all_artists:
-            artist_data[artist] = {
-                'mb_id': None,
-                'source': ', '.join(artist_sources.get(artist, ['Unknown'])),
-                'play_count': play_counts.get(artist, 0)
-            }
-    else:
-        console.print("[cyan]Looking up MusicBrainz IDs...[/cyan]", style="bold")
-
-        mb_lookup = MusicBrainzLookup(config.musicbrainz_user_agent)
-
-        with Progress(
-            SpinnerColumn(),
-            TextColumn("[progress.description]{task.description}"),
-            BarColumn(),
-            TaskProgressColumn(),
-            console=console
-        ) as progress:
-
-            task = progress.add_task(
-                "[cyan]Searching MusicBrainz...",
-                total=len(all_artists)
-            )
-
-            artist_list = sorted(all_artists)
-            for i, artist_name in enumerate(artist_list):
-                mb_id = mb_lookup.lookup_artist(artist_name)
-                artist_data[artist_name] = {
-                    'mb_id': mb_id,
-                    'source': ', '.join(artist_sources.get(artist_name, ['Unknown'])),
-                    'play_count': play_counts.get(artist_name, 0)
-                }
-                progress.update(task, advance=1, description=f"[cyan]Searching MusicBrainz... ({artist_name[:40]})")
-
-        found_count = sum(1 for v in artist_data.values() if v['mb_id'] is not None)
-        console.print(f"[green]✓[/green] MusicBrainz: Found IDs for {found_count}/{len(all_artists)} artists", style="bold")
-
-    console.print()
-
-    # Export to CSV
     output_file = output if output else config.output_csv_file
-
-    console.print("[cyan]Exporting to CSV...[/cyan]", style="bold")
-
     exporter = CSVExporter(output_file, config.output_skipped_log)
 
-    try:
-        exported_count, skipped_count = exporter.export(artist_data)
+    with exporter:
+        if skip_musicbrainz:
+            console.print("[yellow]⚠[/yellow]  Skipping MusicBrainz lookup", style="bold")
+            for artist_name in sorted(all_artists):
+                exporter.log_skipped_artist(artist_name)
+        else:
+            console.print("[cyan]Looking up MusicBrainz IDs and exporting...[/cyan]", style="bold")
+            mb_lookup = MusicBrainzLookup(config.musicbrainz_user_agent)
 
-        console.print(f"[green]✓[/green] Exported {exported_count} artists to {output_file}", style="bold")
-        if skipped_count > 0:
-            console.print(f"[yellow]⚠[/yellow]  {skipped_count} artists skipped (logged to {config.output_skipped_log})", style="bold")
+            with Progress(
+                SpinnerColumn(),
+                TextColumn("[progress.description]{task.description}"),
+                BarColumn(),
+                TaskProgressColumn(),
+                console=console
+            ) as progress:
+                task = progress.add_task(
+                    "[cyan]Processing artists...",
+                    total=len(all_artists)
+                )
 
-    except Exception as e:
-        console.print(f"[red]✗[/red] Error exporting data: {e}", style="bold")
-        raise typer.Exit(1)
+                for artist_name in sorted(all_artists):
+                    mb_id = mb_lookup.lookup_artist(artist_name)
+                    if mb_id:
+                        source = ', '.join(artist_sources.get(artist_name, ['Unknown']))
+                        play_count = play_counts.get(artist_name, 0)
+                        exporter.export_artist(artist_name, mb_id, source, play_count)
+                    else:
+                        exporter.log_skipped_artist(artist_name)
+                    
+                    progress.update(task, advance=1, description=f"[cyan]Processing... ({artist_name[:40]})")
+
+        exported_count = exporter.exported_count
+        skipped_count = exporter.skipped_count
+
+        console.print(f"[green]✓[/green] MusicBrainz: Found IDs for {exported_count}/{len(all_artists)} artists", style="bold")
 
     console.print()
 
@@ -269,8 +252,20 @@ def main(
 
         lidarr_client = LidarrClient(config.lidarr_url, config.lidarr_api_key)
 
-        # Only add artists with MusicBrainz IDs
-        artists_with_ids = {k: v['mb_id'] for k, v in artist_data.items() if v['mb_id']}
+        # Read artists from the generated CSV
+        artists_with_ids = {}
+        try:
+            with open(output_file, 'r', encoding='utf-8') as f:
+                reader = csv.DictReader(f)
+                for row in reader:
+                    artists_with_ids[row['Artist Name']] = row['MusicBrainz ID']
+        except FileNotFoundError:
+            console.print(f"[red]✗[/red] Exported CSV file not found: {output_file}", style="bold")
+            raise typer.Exit(1)
+        except Exception as e:
+            console.print(f"[red]✗[/red] Error reading exported CSV file: {e}", style="bold")
+            raise typer.Exit(1)
+
 
         if not artists_with_ids:
             console.print("[yellow]⚠[/yellow]  No artists with MusicBrainz IDs to add to Lidarr", style="bold")
@@ -406,7 +401,6 @@ def import_csv(
     console.print()
 
     # Read CSV file
-    import csv
     csv_path = Path(csv_file)
 
     if not csv_path.exists():
