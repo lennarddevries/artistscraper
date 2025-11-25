@@ -20,8 +20,9 @@ jobs:
           python-version: "3.12"
       - name: Install dependencies
         run: pip install python-semantic-release
-      - name: Release
+      - name: Python Semantic Release
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          REPOSITORY_USERNAME: __token__
+          REPOSITORY_PASSWORD: ${{ secrets.PYPI_TOKEN }}
         run: semantic-release publish

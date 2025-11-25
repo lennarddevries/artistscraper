@@ -72,11 +72,12 @@ build_command = "pip install poetry && poetry build"
 upload_to_vcs_release = true
 
 [tool.semantic_release.changelog]
-changelog_file = "CHANGELOG.md"
+default_templates.changelog_file = "CHANGELOG.md"
 
 [tool.semantic_release.publish]
 dist_glob_patterns = ["dist/*"]
 upload_to_vcs_release = true
+upload_to_repository = true
 
 [build-system]
 requires = ["poetry-core>=1.0.0"]
