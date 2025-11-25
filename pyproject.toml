@@ -1,15 +1,24 @@
 [project]
 name = "artistscraper"
 version = "0.1.0"
-description = ""
+description = "Fetch artists from YouTube Music and Spotify with MusicBrainz IDs"
 authors = [
     {name = "lennarddevries",email = "lennard.devries@me.com"}
 ]
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
-    "ytmusicapi (>=1.11.1,<2.0.0)"
+    "ytmusicapi (>=1.11.1,<2.0.0)",
+    "spotipy>=2.23.0",
+    "musicbrainzngs>=0.7.1",
+    "requests>=2.31.0",
+    "python-dotenv>=1.0.0",
+    "typer>=0.12.0",
+    "rich>=13.7.0"
 ]
+
+[project.scripts]
+artistscraper = "artistscraper.__main__:cli_main"
 
 
 [build-system]

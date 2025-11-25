@@ -1,0 +1,21 @@
+{
+  "spotify": {
+    "client_id": "your_spotify_client_id_here",
+    "client_secret": "your_spotify_client_secret_here",
+    "refresh_token": "your_spotify_refresh_token_here"
+  },
+  "youtube_music": {
+    "auth_file": "ytmusic_auth.json"
+  },
+  "lidarr": {
+    "url": "http://localhost:8686",
+    "api_key": "your_lidarr_api_key_here"
+  },
+  "musicbrainz": {
+    "user_agent": "artistscraper/0.1.0 (your-email@example.com)"
+  },
+  "output": {
+    "csv_file": "artists.csv",
+    "skipped_log": "skipped_artists.log"
+  }
+}
