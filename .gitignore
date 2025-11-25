@@ -43,6 +43,6 @@ env/
 # OS
 .DS_Store
 Thumbs.db
-oauth.json
+ytmusic_auth.json
 .cache
 .claude

@@ -13,13 +13,17 @@ logger = logging.getLogger(__name__)
 class YouTubeMusicFetcher:
     """Fetch artists from YouTube Music."""
 
-    def __init__(self, auth_file: str):
+    def __init__(self, auth_file: str, client_id: str = None, client_secret: str = None):
         """Initialize YouTube Music fetcher.
 
         Args:
             auth_file: Path to YouTube Music authentication file
+            client_id: Optional OAuth client ID for custom credentials
+            client_secret: Optional OAuth client secret for custom credentials
         """
         self.auth_file = auth_file
+        self.client_id = client_id
+        self.client_secret = client_secret
         self.ytmusic: YTMusic | None = None
 
     def authenticate(self) -> bool:
@@ -44,8 +48,17 @@ class YouTubeMusicFetcher:
             return False
 
         try:
-            self.ytmusic = YTMusic(self.auth_file)
-            logger.info("Successfully authenticated with YouTube Music")
+            # If OAuth credentials are provided, pass them to YTMusic
+            if self.client_id and self.client_secret:
+                oauth_credentials = {
+                    "client_id": self.client_id,
+                    "client_secret": self.client_secret
+                }
+                self.ytmusic = YTMusic(self.auth_file, oauth_credentials=oauth_credentials)
+                logger.info("Successfully authenticated with YouTube Music using OAuth credentials")
+            else:
+                self.ytmusic = YTMusic(self.auth_file)
+                logger.info("Successfully authenticated with YouTube Music")
             return True
         except Exception as e:
             logger.error(f"Failed to authenticate with YouTube Music: {e}")

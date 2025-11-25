@@ -153,7 +153,11 @@ def main(
         if not spotify_only:
             task = progress.add_task("[red]Fetching from YouTube Music...", total=None)
 
-            youtube_fetcher = YouTubeMusicFetcher(config.youtube_auth_file)
+            youtube_fetcher = YouTubeMusicFetcher(
+                config.youtube_auth_file,
+                config.youtube_client_id,
+                config.youtube_client_secret
+            )
             youtube_artists = youtube_fetcher.get_all_artists(play_counts)
             all_artists.update(youtube_artists)
             source_stats['YouTube Music'] = len(youtube_artists)
