@@ -53,8 +53,11 @@ class SpotifyFetcher:
             logger.error(f"Failed to authenticate with Spotify: {e}")
             return False
 
-    def get_artists_from_saved_tracks(self) -> Set[str]:
+    def get_artists_from_saved_tracks(self, play_counts: dict = None) -> Set[str]:
         """Get artists from saved/liked tracks.
+
+        Args:
+            play_counts: Optional dict to track play counts per artist
 
         Returns:
             Set of artist names
@@ -64,6 +67,9 @@ class SpotifyFetcher:
             return set()
 
         artists = set()
+        if play_counts is None:
+            play_counts = {}
+
         try:
             logger.info("Fetching saved tracks from Spotify...")
             offset = 0
@@ -82,6 +88,8 @@ class SpotifyFetcher:
                             artist_name = artist.get('name')
                             if artist_name:
                                 artists.add(artist_name)
+                                if play_counts is not None:
+                                    play_counts[artist_name] = play_counts.get(artist_name, 0) + 1
 
                 # Check if there are more tracks
                 if not results['next']:
@@ -142,8 +150,11 @@ class SpotifyFetcher:
 
         return artists
 
-    def get_artists_from_playlists(self) -> Set[str]:
+    def get_artists_from_playlists(self, play_counts: dict = None) -> Set[str]:
         """Get artists from all playlists (including private and collaborative).
+
+        Args:
+            play_counts: Optional dict to track play counts per artist
 
         Returns:
             Set of artist names
@@ -153,6 +164,9 @@ class SpotifyFetcher:
             return set()
 
         artists = set()
+        if play_counts is None:
+            play_counts = {}
+
         try:
             logger.info("Fetching playlists from Spotify...")
             offset = 0
@@ -193,6 +207,8 @@ class SpotifyFetcher:
                                         artist_name = artist.get('name')
                                         if artist_name:
                                             artists.add(artist_name)
+                                            if play_counts is not None:
+                                                play_counts[artist_name] = play_counts.get(artist_name, 0) + 1
 
                             # Check if there are more tracks
                             if not tracks_result['next']:
@@ -216,8 +232,11 @@ class SpotifyFetcher:
 
         return artists
 
-    def get_all_artists(self) -> Set[str]:
+    def get_all_artists(self, play_counts: dict = None) -> Set[str]:
         """Get all unique artists from all sources.
+
+        Args:
+            play_counts: Optional dict to track play counts per artist
 
         Returns:
             Set of all unique artist names
@@ -228,13 +247,13 @@ class SpotifyFetcher:
         all_artists = set()
 
         # Get artists from saved tracks
-        all_artists.update(self.get_artists_from_saved_tracks())
+        all_artists.update(self.get_artists_from_saved_tracks(play_counts))
 
-        # Get followed artists
+        # Get followed artists (don't count these as plays)
         all_artists.update(self.get_followed_artists())
 
         # Get artists from playlists
-        all_artists.update(self.get_artists_from_playlists())
+        all_artists.update(self.get_artists_from_playlists(play_counts))
 
         logger.info(f"Total unique artists from Spotify: {len(all_artists)}")
         return all_artists

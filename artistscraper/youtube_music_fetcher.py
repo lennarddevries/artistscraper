@@ -51,8 +51,11 @@ class YouTubeMusicFetcher:
             logger.error(f"Failed to authenticate with YouTube Music: {e}")
             return False
 
-    def get_artists_from_liked_songs(self) -> Set[str]:
+    def get_artists_from_liked_songs(self, play_counts: dict = None) -> Set[str]:
         """Get artists from liked songs.
+
+        Args:
+            play_counts: Optional dict to track play counts per artist
 
         Returns:
             Set of artist names
@@ -62,6 +65,9 @@ class YouTubeMusicFetcher:
             return set()
 
         artists = set()
+        if play_counts is None:
+            play_counts = {}
+
         try:
             logger.info("Fetching liked songs from YouTube Music...")
             liked_songs = self.ytmusic.get_liked_songs(limit=None)
@@ -73,6 +79,8 @@ class YouTubeMusicFetcher:
                             artist_name = artist.get('name')
                             if artist_name:
                                 artists.add(artist_name)
+                                if play_counts is not None:
+                                    play_counts[artist_name] = play_counts.get(artist_name, 0) + 1
 
             logger.info(f"Found {len(artists)} unique artists from liked songs")
         except Exception as e:
@@ -105,8 +113,11 @@ class YouTubeMusicFetcher:
 
         return artists
 
-    def get_artists_from_playlists(self) -> Set[str]:
+    def get_artists_from_playlists(self, play_counts: dict = None) -> Set[str]:
         """Get artists from all playlists.
+
+        Args:
+            play_counts: Optional dict to track play counts per artist
 
         Returns:
             Set of artist names
@@ -116,6 +127,9 @@ class YouTubeMusicFetcher:
             return set()
 
         artists = set()
+        if play_counts is None:
+            play_counts = {}
+
         try:
             logger.info("Fetching playlists from YouTube Music...")
             playlists = self.ytmusic.get_library_playlists(limit=None)
@@ -136,6 +150,8 @@ class YouTubeMusicFetcher:
                                     artist_name = artist.get('name')
                                     if artist_name:
                                         artists.add(artist_name)
+                                        if play_counts is not None:
+                                            play_counts[artist_name] = play_counts.get(artist_name, 0) + 1
                 except Exception as e:
                     logger.warning(f"Error fetching playlist {playlist_id}: {e}")
                     continue
@@ -146,8 +162,11 @@ class YouTubeMusicFetcher:
 
         return artists
 
-    def get_all_artists(self) -> Set[str]:
+    def get_all_artists(self, play_counts: dict = None) -> Set[str]:
         """Get all unique artists from all sources.
+
+        Args:
+            play_counts: Optional dict to track play counts per artist
 
         Returns:
             Set of all unique artist names
@@ -158,13 +177,13 @@ class YouTubeMusicFetcher:
         all_artists = set()
 
         # Get artists from liked songs
-        all_artists.update(self.get_artists_from_liked_songs())
+        all_artists.update(self.get_artists_from_liked_songs(play_counts))
 
-        # Get subscribed artists
+        # Get subscribed artists (don't count these as plays)
         all_artists.update(self.get_subscribed_artists())
 
         # Get artists from playlists
-        all_artists.update(self.get_artists_from_playlists())
+        all_artists.update(self.get_artists_from_playlists(play_counts))
 
         logger.info(f"Total unique artists from YouTube Music: {len(all_artists)}")
         return all_artists

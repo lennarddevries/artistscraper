@@ -112,9 +112,10 @@ def main(
 
     console.print()
 
-    # Collect artists from sources with source tracking
+    # Collect artists from sources with source and play count tracking
     all_artists = set()
     artist_sources = {}  # Track which source(s) each artist came from
+    play_counts = {}  # Track how many songs by each artist
     source_stats = {}
 
     with Progress(
@@ -135,7 +136,7 @@ def main(
                 config.spotify_refresh_token
             )
 
-            spotify_artists = spotify_fetcher.get_all_artists()
+            spotify_artists = spotify_fetcher.get_all_artists(play_counts)
             all_artists.update(spotify_artists)
             source_stats['Spotify'] = len(spotify_artists)
 
@@ -153,7 +154,7 @@ def main(
             task = progress.add_task("[red]Fetching from YouTube Music...", total=None)
 
             youtube_fetcher = YouTubeMusicFetcher(config.youtube_auth_file)
-            youtube_artists = youtube_fetcher.get_all_artists()
+            youtube_artists = youtube_fetcher.get_all_artists(play_counts)
             all_artists.update(youtube_artists)
             source_stats['YouTube Music'] = len(youtube_artists)
 
@@ -185,7 +186,8 @@ def main(
         for artist in all_artists:
             artist_data[artist] = {
                 'mb_id': None,
-                'source': ', '.join(artist_sources.get(artist, ['Unknown']))
+                'source': ', '.join(artist_sources.get(artist, ['Unknown'])),
+                'play_count': play_counts.get(artist, 0)
             }
     else:
         console.print("[cyan]Looking up MusicBrainz IDs...[/cyan]", style="bold")
@@ -210,7 +212,8 @@ def main(
                 mb_id = mb_lookup.lookup_artist(artist_name)
                 artist_data[artist_name] = {
                     'mb_id': mb_id,
-                    'source': ', '.join(artist_sources.get(artist_name, ['Unknown']))
+                    'source': ', '.join(artist_sources.get(artist_name, ['Unknown'])),
+                    'play_count': play_counts.get(artist_name, 0)
                 }
                 progress.update(task, advance=1, description=f"[cyan]Searching MusicBrainz... ({artist_name[:40]})")
 

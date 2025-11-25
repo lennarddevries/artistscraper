@@ -38,9 +38,10 @@ class CSVExporter:
         for artist_name, data in sorted(artist_data.items()):
             mb_id = data.get('mb_id') if isinstance(data, dict) else data
             source = data.get('source', 'Unknown') if isinstance(data, dict) else 'Unknown'
+            play_count = data.get('play_count', 0) if isinstance(data, dict) else 0
 
             if mb_id:
-                exported_artists.append((artist_name, mb_id, source))
+                exported_artists.append((artist_name, mb_id, source, play_count))
             else:
                 skipped_artists.append(artist_name)
 
@@ -51,11 +52,11 @@ class CSVExporter:
             with open(self.csv_file, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 # Write header
-                writer.writerow(['Artist Name', 'MusicBrainz ID', 'Source'])
+                writer.writerow(['Artist Name', 'MusicBrainz ID', 'Source', 'Play Count'])
 
                 # Write artist data
-                for artist_name, mb_id, source in exported_artists:
-                    writer.writerow([artist_name, mb_id, source])
+                for artist_name, mb_id, source, play_count in exported_artists:
+                    writer.writerow([artist_name, mb_id, source, play_count])
 
             logger.info(f"Successfully exported {len(exported_artists)} artists to {self.csv_file}")
 
