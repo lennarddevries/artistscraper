@@ -70,6 +70,13 @@ branch = "main"
 hvcs = "github"
 build_command = "pip install poetry && poetry build"
 upload_to_vcs_release = true
+tag_commit = true
+commit_version_number = true
+
+[tool.semantic_release.remote]
+name = "origin"
+type = "github"
+ignore_token_for_push = false
 
 [tool.semantic_release.changelog]
 default_templates.changelog_file = "CHANGELOG.md"
