@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install python-semantic-release twine
+        run: pip install python-semantic-release twine toml
       - name: Semantic Release Version
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -32,11 +32,23 @@ jobs:
         env:
           TWINE_USERNAME: __token__
           TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+          GH_TOKEN: ${{ secrets.GH_TOKEN }}
         run: |
+          # Check if dist directory exists from version step
           if [ -d "dist" ] && [ "$(ls -A dist)" ]; then
+            echo "Found dist files from build step"
             python -m twine upload dist/* --skip-existing
           else
-            echo "No dist directory or no files to upload"
+            # Try to get current version and download from release
+            VERSION=$(python -c "import toml; print(toml.load('pyproject.toml')['project']['version'])")
+            echo "Checking for release v$VERSION"
+            if gh release view "v$VERSION" > /dev/null 2>&1; then
+              echo "Downloading assets from release v$VERSION"
+              gh release download "v$VERSION" --pattern "*.whl" --pattern "*.tar.gz"
+              python -m twine upload *.whl *.tar.gz --skip-existing
+            else
+              echo "No dist files and no matching release found"
+            fi
           fi
       - name: Semantic Release Publish
         env:
