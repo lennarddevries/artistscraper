@@ -284,52 +284,6 @@ The tool automatically respects MusicBrainz's rate limit (1 request per second).
 - Check `skipped_artists.log` for artists without matches
 - You can manually add MusicBrainz IDs for important artists
 
-## Development
-
-### Project Structure
-
-```
-artistscraper/
-   artistscraper/
-      __init__.py
-      __main__.py           # CLI entry point
-      config.py             # Configuration management
-      spotify_fetcher.py    # Spotify API client
-      youtube_music_fetcher.py  # YouTube Music API client
-      musicbrainz_lookup.py # MusicBrainz ID lookup
-      exporter.py           # CSV export functionality
-      lidarr_client.py      # Lidarr API client
-   config.example.json       # Example configuration
-   config.json               # Your configuration (git-ignored)
-   pyproject.toml            # Project metadata and dependencies
-   README.md                 # This file
-```
-
-### Running Tests
-
-```bash
-# Run the tool in verbose mode
-poetry run artistscraper --verbose
-```
-
-### Code Quality
-
-The codebase follows:
-- Type hints for all functions
-- Comprehensive error handling
-- Rate limiting for external APIs
-- Clear separation of concerns
-
-## License
-
-MIT License - see [LICENSE](LICENSE) file for details.
-
-Please respect the terms of service for the APIs used:
-- [Spotify API](https://developer.spotify.com/terms)
-- [YouTube Music](https://www.youtube.com/t/terms)
-- [MusicBrainz API](https://musicbrainz.org/doc/MusicBrainz_API)
-- [Lidarr](https://lidarr.audio/)
-
 ## Contributing
 
 This is a personal project, but suggestions and improvements are welcome!
