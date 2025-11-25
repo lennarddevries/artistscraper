@@ -130,6 +130,10 @@ class YouTubeMusicFetcher:
 
                 for item in data.get("items", []):
                     snippet = item.get("snippet", {})
+                    # '10' is the categoryId for Music on YouTube
+                    if snippet.get("categoryId") != "10":
+                        continue
+
                     title = snippet.get("title", "")
                     channel_title = snippet.get("channelTitle", "")
 
@@ -186,15 +190,31 @@ class YouTubeMusicFetcher:
 
                 data = self._make_request("subscriptions", params)
 
-                for item in data.get("items", []):
-                    snippet = item.get("snippet", {})
-                    channel_title = snippet.get("title", "")
+                channel_ids = [
+                    item["snippet"]["resourceId"]["channelId"]
+                    for item in data.get("items", [])
+                    if "channelId" in item.get("snippet", {}).get("resourceId", {})
+                ]
 
-                    if channel_title:
-                        # Clean up VEVO and other suffixes
-                        artist_name = channel_title.replace("VEVO", "").replace("Vevo", "").replace("Official", "").strip()
-                        if artist_name:
-                            artists.add(artist_name)
+                if channel_ids:
+                    channel_params = {
+                        "part": "snippet,topicDetails",
+                        "id": ",".join(channel_ids),
+                        "maxResults": 50
+                    }
+                    channel_data = self._make_request("channels", channel_params)
+
+                    for item in channel_data.get("items", []):
+                        topic_details = item.get("topicDetails", {})
+                        topic_ids = topic_details.get("topicIds", [])
+                        
+                        # '/m/04rlf' is the Topic ID for Music
+                        if "/m/04rlf" in topic_ids:
+                            channel_title = item["snippet"]["title"]
+                            # Clean up VEVO and other suffixes
+                            artist_name = channel_title.replace("VEVO", "").replace("Vevo", "").replace("Official", "").strip()
+                            if artist_name:
+                                artists.add(artist_name)
 
                 page_token = data.get("nextPageToken")
                 if not page_token:
@@ -255,37 +275,57 @@ class YouTubeMusicFetcher:
                 try:
                     page_token = None
                     while True:
-                        params = {
+                        # Get playlist items
+                        playlist_items_params = {
                             "part": "snippet",
                             "playlistId": playlist_id,
                             "maxResults": 50
                         }
                         if page_token:
-                            params["pageToken"] = page_token
+                            playlist_items_params["pageToken"] = page_token
 
-                        data = self._make_request("playlistItems", params)
+                        playlist_items_data = self._make_request("playlistItems", playlist_items_params)
+                        
+                        video_ids = [
+                            item["snippet"]["resourceId"]["videoId"]
+                            for item in playlist_items_data.get("items", [])
+                            if "videoId" in item.get("snippet", {}).get("resourceId", {})
+                        ]
 
-                        for item in data.get("items", []):
-                            snippet = item.get("snippet", {})
-                            title = snippet.get("title", "")
-                            channel_title = snippet.get("videoOwnerChannelTitle", snippet.get("channelTitle", ""))
+                        if video_ids:
+                            # Get video details for the collected IDs
+                            video_params = {
+                                "part": "snippet",
+                                "id": ",".join(video_ids),
+                                "maxResults": 50
+                            }
+                            video_data = self._make_request("videos", video_params)
 
-                            # Extract artist from title
-                            artist = self._extract_artist_from_title(title)
-                            if artist:
-                                artists.add(artist)
-                                if play_counts is not None:
-                                    play_counts[artist] = play_counts.get(artist, 0) + 1
+                            for item in video_data.get("items", []):
+                                snippet = item.get("snippet", {})
+                                # '10' is the categoryId for Music
+                                if snippet.get("categoryId") != "10":
+                                    continue
 
-                            # Check channel title for VEVO artists
-                            if channel_title and "VEVO" in channel_title.upper():
-                                artist_name = channel_title.replace("VEVO", "").replace("Vevo", "").strip()
-                                if artist_name:
-                                    artists.add(artist_name)
+                                title = snippet.get("title", "")
+                                channel_title = snippet.get("channelTitle", "")
+
+                                # Extract artist from title
+                                artist = self._extract_artist_from_title(title)
+                                if artist:
+                                    artists.add(artist)
                                     if play_counts is not None:
-                                        play_counts[artist_name] = play_counts.get(artist_name, 0) + 1
+                                        play_counts[artist] = play_counts.get(artist, 0) + 1
 
-                        page_token = data.get("nextPageToken")
+                                # Check channel title for VEVO artists
+                                if channel_title and "VEVO" in channel_title.upper():
+                                    artist_name = channel_title.replace("VEVO", "").replace("Vevo", "").strip()
+                                    if artist_name:
+                                        artists.add(artist_name)
+                                        if play_counts is not None:
+                                            play_counts[artist_name] = play_counts.get(artist_name, 0) + 1
+
+                        page_token = playlist_items_data.get("nextPageToken")
                         if not page_token:
                             break
 
