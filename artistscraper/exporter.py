@@ -22,11 +22,11 @@ class CSVExporter:
         self.csv_file = Path(csv_file)
         self.skipped_log = Path(skipped_log)
 
-    def export(self, artist_data: Dict[str, Optional[str]]) -> tuple[int, int]:
+    def export(self, artist_data: Dict[str, Dict[str, Optional[str]]]) -> tuple[int, int]:
         """Export artist data to CSV and log skipped artists.
 
         Args:
-            artist_data: Dictionary mapping artist names to MusicBrainz IDs
+            artist_data: Dictionary mapping artist names to dict with 'mb_id' and 'source'
 
         Returns:
             Tuple of (exported_count, skipped_count)
@@ -35,9 +35,12 @@ class CSVExporter:
         skipped_artists = []
 
         # Separate artists with and without MusicBrainz IDs
-        for artist_name, mb_id in sorted(artist_data.items()):
+        for artist_name, data in sorted(artist_data.items()):
+            mb_id = data.get('mb_id') if isinstance(data, dict) else data
+            source = data.get('source', 'Unknown') if isinstance(data, dict) else 'Unknown'
+
             if mb_id:
-                exported_artists.append((artist_name, mb_id))
+                exported_artists.append((artist_name, mb_id, source))
             else:
                 skipped_artists.append(artist_name)
 
@@ -48,11 +51,11 @@ class CSVExporter:
             with open(self.csv_file, 'w', newline='', encoding='utf-8') as f:
                 writer = csv.writer(f)
                 # Write header
-                writer.writerow(['Artist Name', 'MusicBrainz ID'])
+                writer.writerow(['Artist Name', 'MusicBrainz ID', 'Source'])
 
                 # Write artist data
-                for artist_name, mb_id in exported_artists:
-                    writer.writerow([artist_name, mb_id])
+                for artist_name, mb_id, source in exported_artists:
+                    writer.writerow([artist_name, mb_id, source])
 
             logger.info(f"Successfully exported {len(exported_artists)} artists to {self.csv_file}")
 

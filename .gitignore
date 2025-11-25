@@ -43,3 +43,6 @@ env/
 # OS
 .DS_Store
 Thumbs.db
+oauth.json
+.cache
+.claude

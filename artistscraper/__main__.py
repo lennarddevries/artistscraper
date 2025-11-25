@@ -1,6 +1,7 @@
 """Artist Scraper - Fetch artists from YouTube Music and Spotify."""
 
 import sys
+import logging
 from pathlib import Path
 from typing import Optional
 
@@ -10,6 +11,7 @@ from rich.panel import Panel
 from rich.table import Table
 from rich.progress import Progress, SpinnerColumn, TextColumn, BarColumn, TaskProgressColumn
 from rich import print as rprint
+from rich.logging import RichHandler
 
 from .config import Config
 from .youtube_music_fetcher import YouTubeMusicFetcher
@@ -71,6 +73,25 @@ def main(
 ) -> None:
     """Fetch artists from YouTube Music and Spotify with MusicBrainz IDs."""
 
+    # Configure logging based on verbose flag
+    if verbose:
+        logging.basicConfig(
+            level=logging.DEBUG,
+            format="%(name)s - %(message)s",
+            handlers=[RichHandler(console=console, show_time=False, show_path=False)]
+        )
+        # Set specific loggers to appropriate levels
+        logging.getLogger("artistscraper").setLevel(logging.DEBUG)
+        logging.getLogger("urllib3").setLevel(logging.WARNING)
+        logging.getLogger("spotipy").setLevel(logging.WARNING)
+        logging.getLogger("ytmusicapi").setLevel(logging.WARNING)
+    else:
+        logging.basicConfig(
+            level=logging.WARNING,
+            format="%(message)s",
+            handlers=[RichHandler(console=console, show_time=False, show_path=False)]
+        )
+
     console.print(Panel.fit(
         "[bold cyan]Artist Scraper[/bold cyan]\n"
         "Fetch artists from YouTube Music and Spotify",
@@ -91,8 +112,9 @@ def main(
 
     console.print()
 
-    # Collect artists from sources
+    # Collect artists from sources with source tracking
     all_artists = set()
+    artist_sources = {}  # Track which source(s) each artist came from
     source_stats = {}
 
     with Progress(
@@ -117,6 +139,12 @@ def main(
             all_artists.update(spotify_artists)
             source_stats['Spotify'] = len(spotify_artists)
 
+            # Track source for each artist
+            for artist in spotify_artists:
+                if artist not in artist_sources:
+                    artist_sources[artist] = []
+                artist_sources[artist].append('Spotify')
+
             progress.update(task, completed=True)
             console.print(f"[green]✓[/green] Spotify: Found {len(spotify_artists)} unique artists", style="bold")
 
@@ -128,6 +156,12 @@ def main(
             youtube_artists = youtube_fetcher.get_all_artists()
             all_artists.update(youtube_artists)
             source_stats['YouTube Music'] = len(youtube_artists)
+
+            # Track source for each artist
+            for artist in youtube_artists:
+                if artist not in artist_sources:
+                    artist_sources[artist] = []
+                artist_sources[artist].append('YouTube Music')
 
             progress.update(task, completed=True)
             console.print(f"[green]✓[/green] YouTube Music: Found {len(youtube_artists)} unique artists", style="bold")
@@ -149,7 +183,10 @@ def main(
     if skip_musicbrainz:
         console.print("[yellow]⚠[/yellow]  Skipping MusicBrainz lookup", style="bold")
         for artist in all_artists:
-            artist_data[artist] = None
+            artist_data[artist] = {
+                'mb_id': None,
+                'source': ', '.join(artist_sources.get(artist, ['Unknown']))
+            }
     else:
         console.print("[cyan]Looking up MusicBrainz IDs...[/cyan]", style="bold")
 
@@ -171,10 +208,13 @@ def main(
             artist_list = sorted(all_artists)
             for i, artist_name in enumerate(artist_list):
                 mb_id = mb_lookup.lookup_artist(artist_name)
-                artist_data[artist_name] = mb_id
+                artist_data[artist_name] = {
+                    'mb_id': mb_id,
+                    'source': ', '.join(artist_sources.get(artist_name, ['Unknown']))
+                }
                 progress.update(task, advance=1, description=f"[cyan]Searching MusicBrainz... ({artist_name[:40]})")
 
-        found_count = sum(1 for v in artist_data.values() if v is not None)
+        found_count = sum(1 for v in artist_data.values() if v['mb_id'] is not None)
         console.print(f"[green]✓[/green] MusicBrainz: Found IDs for {found_count}/{len(all_artists)} artists", style="bold")
 
     console.print()
@@ -223,7 +263,7 @@ def main(
         lidarr_client = LidarrClient(config.lidarr_url, config.lidarr_api_key)
 
         # Only add artists with MusicBrainz IDs
-        artists_with_ids = {k: v for k, v in artist_data.items() if v}
+        artists_with_ids = {k: v['mb_id'] for k, v in artist_data.items() if v['mb_id']}
 
         if not artists_with_ids:
             console.print("[yellow]⚠[/yellow]  No artists with MusicBrainz IDs to add to Lidarr", style="bold")

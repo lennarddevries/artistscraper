@@ -79,8 +79,9 @@ class SpotifyFetcher:
                     track = item.get('track')
                     if track and 'artists' in track:
                         for artist in track['artists']:
-                            if 'name' in artist:
-                                artists.add(artist['name'])
+                            artist_name = artist.get('name')
+                            if artist_name:
+                                artists.add(artist_name)
 
                 # Check if there are more tracks
                 if not results['next']:
@@ -121,8 +122,9 @@ class SpotifyFetcher:
                     break
 
                 for artist in artists_data['items']:
-                    if 'name' in artist:
-                        artists.add(artist['name'])
+                    artist_name = artist.get('name')
+                    if artist_name:
+                        artists.add(artist_name)
 
                 # Check if there are more artists
                 if not artists_data['next']:
@@ -188,8 +190,9 @@ class SpotifyFetcher:
                                 track = item.get('track')
                                 if track and 'artists' in track:
                                     for artist in track['artists']:
-                                        if 'name' in artist:
-                                            artists.add(artist['name'])
+                                        artist_name = artist.get('name')
+                                        if artist_name:
+                                            artists.add(artist_name)
 
                             # Check if there are more tracks
                             if not tracks_result['next']:

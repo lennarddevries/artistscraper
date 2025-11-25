@@ -28,6 +28,21 @@ class YouTubeMusicFetcher:
         Returns:
             True if authentication successful, False otherwise
         """
+        from pathlib import Path
+
+        # Check if auth file exists
+        auth_path = Path(self.auth_file)
+        if not auth_path.exists():
+            logger.error(
+                f"YouTube Music auth file not found: {self.auth_file}\n"
+                f"To authenticate with YouTube Music:\n"
+                f"1. Run: ytmusicapi oauth\n"
+                f"2. Follow the browser authentication flow\n"
+                f"3. Save the file as '{self.auth_file}'\n"
+                f"Or use --spotify-only to skip YouTube Music"
+            )
+            return False
+
         try:
             self.ytmusic = YTMusic(self.auth_file)
             logger.info("Successfully authenticated with YouTube Music")
@@ -55,8 +70,9 @@ class YouTubeMusicFetcher:
                 for track in liked_songs['tracks']:
                     if 'artists' in track and track['artists']:
                         for artist in track['artists']:
-                            if 'name' in artist:
-                                artists.add(artist['name'])
+                            artist_name = artist.get('name')
+                            if artist_name:
+                                artists.add(artist_name)
 
             logger.info(f"Found {len(artists)} unique artists from liked songs")
         except Exception as e:
@@ -117,8 +133,9 @@ class YouTubeMusicFetcher:
                         for track in playlist_details['tracks']:
                             if 'artists' in track and track['artists']:
                                 for artist in track['artists']:
-                                    if 'name' in artist:
-                                        artists.add(artist['name'])
+                                    artist_name = artist.get('name')
+                                    if artist_name:
+                                        artists.add(artist_name)
                 except Exception as e:
                     logger.warning(f"Error fetching playlist {playlist_id}: {e}")
                     continue
