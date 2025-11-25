@@ -23,7 +23,7 @@ jobs:
         with:
           python-version: "3.12"
       - name: Install dependencies
-        run: pip install python-semantic-release
+        run: pip install python-semantic-release twine
       - name: Python Semantic Release
         env:
           GH_TOKEN: ${{ secrets.GH_TOKEN }}
@@ -32,3 +32,10 @@ jobs:
         run: |
           semantic-release --verbose version
           semantic-release --verbose publish
+      - name: Publish to PyPI
+        if: hashFiles('dist/*') != ''
+        env:
+          TWINE_USERNAME: __token__
+          TWINE_PASSWORD: ${{ secrets.PYPI_TOKEN }}
+        run: |
+          python -m twine upload dist/* --skip-existing
