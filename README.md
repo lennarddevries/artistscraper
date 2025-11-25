@@ -1,4 +1,4 @@
-# Artist Scraper [![Build](https://github.com/lennarddevries/artistscraper/actions/workflows/ci.yml/badge.svg)](https://github.com/lennarddevries/artistscraper/actions/workflows/ci.yml)
+# Artist Scraper [![Build](https://github.com/lennarddevries/artistscraper/actions/workflows/ci.yml/badge.svg)](https://github.com/lennarddevries/artistscraper/actions/workflows/ci.yml) [![PyPI](https://img.shields.io/pypi/v/artistscraper.svg)](https://pypi.org/project/artistscraper/)
 
 A production-ready tool to fetch artists from YouTube Music and Spotify, look up their MusicBrainz IDs, and optionally add them to Lidarr for monitoring.
 
@@ -26,16 +26,31 @@ A production-ready tool to fetch artists from YouTube Music and Spotify, look up
 
 ## Installation
 
-### Prerequisites
+### From PyPI (Recommended)
+
+```bash
+pip install artistscraper
+```
+
+Or with pipx for isolated installation:
+
+```bash
+pipx install artistscraper
+```
+
+### From Source
+
+#### Prerequisites
 
 - Python 3.12 or higher
 - Poetry (for dependency management)
 
-### Setup
+#### Setup
 
 1. Clone the repository:
 ```bash
-cd /path/to/artistscraper
+git clone https://github.com/lennarddevries/artistscraper.git
+cd artistscraper
 ```
 
 2. Install dependencies:
@@ -43,16 +58,16 @@ cd /path/to/artistscraper
 poetry install
 ```
 
-3. Copy the example configuration:
+## Configuration
+
+Before using the tool, you need to set up your API credentials.
+
+1. Create a configuration file:
 ```bash
 cp config.example.json config.json
 ```
 
-4. Configure your API credentials (see Configuration section below)
-
-## Configuration
-
-Edit `config.json` with your credentials:
+2. Edit `config.json` with your credentials (see sections below)
 
 ### Spotify Configuration
 
@@ -83,7 +98,7 @@ Add to `config.json`:
 2. Create OAuth 2.0 credentials (Desktop app type)
 3. Run the OAuth flow:
 ```bash
-poetry run ytmusicapi oauth --client-id YOUR_CLIENT_ID --client-secret YOUR_CLIENT_SECRET
+ytmusicapi oauth --client-id YOUR_CLIENT_ID --client-secret YOUR_CLIENT_SECRET
 ```
 
 4. Update `config.json`:
@@ -102,7 +117,7 @@ For detailed instructions, troubleshooting, and information about the recent API
 Update with your email:
 ```json
 "musicbrainz": {
-  "user_agent": "artistscraper/0.1.0 (your-email@example.com)"
+  "user_agent": "artistscraper/1.0.0 (your-email@example.com)"
 }
 ```
 
@@ -111,7 +126,7 @@ Update with your email:
 If you plan to use the `--lidarr` flag:
 
 1. Open your Lidarr instance
-2. Go to Settings � General
+2. Go to Settings → General
 3. Copy your API Key
 
 Add to `config.json`:
@@ -128,15 +143,15 @@ Add to `config.json`:
 
 Fetch artists from both Spotify and YouTube Music:
 ```bash
-poetry run artistscraper scrape
-```
-
-Or if installed globally:
-```bash
 artistscraper scrape
 ```
 
-#### Scrape Command Options
+If installed from source with Poetry:
+```bash
+poetry run artistscraper scrape
+```
+
+#### Options
 
 ```
 Options:
@@ -150,7 +165,7 @@ Options:
   --help                     Show this message and exit
 ```
 
-#### Scrape Examples
+#### Examples
 
 **Fetch from Spotify only:**
 ```bash
@@ -181,10 +196,10 @@ artistscraper scrape --skip-musicbrainz
 
 Import artists from a CSV file to Lidarr:
 ```bash
-poetry run artistscraper import artists.csv
+artistscraper import artists.csv
 ```
 
-#### Import Command Options
+#### Options
 
 ```
 Options:
@@ -194,7 +209,7 @@ Options:
   --help                     Show this message and exit
 ```
 
-#### Import Examples
+#### Examples
 
 **Import all artists from CSV:**
 ```bash
@@ -254,7 +269,7 @@ Make sure you've copied `config.example.json` to `config.json` and filled in you
 - Make sure your refresh token hasn't expired (regenerate if needed)
 
 ### "Failed to authenticate with YouTube Music"
-- Run `poetry run ytmusicapi oauth --client-id YOUR_ID --client-secret YOUR_SECRET` to regenerate authentication
+- Run `ytmusicapi oauth --client-id YOUR_ID --client-secret YOUR_SECRET` to regenerate authentication
 - Make sure the auth file path in `config.json` matches the generated file
 - Ensure YouTube Data API v3 is enabled in your Google Cloud project
 - See [YOUTUBE_MUSIC_SETUP.md](YOUTUBE_MUSIC_SETUP.md) for detailed troubleshooting
@@ -286,7 +301,102 @@ The tool automatically respects MusicBrainz's rate limit (1 request per second).
 
 ## Contributing
 
-This is a personal project, but suggestions and improvements are welcome!
+Contributions are welcome! Whether it's bug reports, feature requests, or code contributions, all input is appreciated.
+
+### Development Setup
+
+1. Clone the repository:
+```bash
+git clone https://github.com/lennarddevries/artistscraper.git
+cd artistscraper
+```
+
+2. Install dependencies (including development tools):
+```bash
+poetry install
+```
+
+3. Install pre-commit hooks:
+```bash
+poetry run pre-commit install
+```
+
+### Development Workflow
+
+**Run the application:**
+```bash
+poetry run artistscraper scrape
+```
+
+**Run code quality checks:**
+```bash
+# Format code with black
+poetry run black artistscraper
+
+# Sort imports with ruff
+poetry run ruff check --select I --fix artistscraper
+
+# Type checking with mypy
+poetry run mypy artistscraper
+```
+
+**Run all quality checks (same as CI):**
+```bash
+# All checks run automatically via pre-commit hooks
+poetry run pre-commit run --all-files
+```
+
+### Code Style
+
+This project uses:
+- **black** for code formatting (88 character line length)
+- **ruff** for import sorting and linting
+- **mypy** for static type checking
+
+All code must pass these checks before being committed (enforced by pre-commit hooks).
+
+### Project Structure
+
+```
+artistscraper/
+├── artistscraper/          # Main package
+│   ├── __init__.py
+│   ├── __main__.py         # CLI entry point
+│   ├── config.py           # Configuration management
+│   ├── lidarr.py           # Lidarr integration
+│   ├── musicbrainz.py      # MusicBrainz ID lookup
+│   ├── spotify.py          # Spotify integration
+│   └── youtube.py          # YouTube Music integration
+├── .github/workflows/      # CI/CD workflows
+│   ├── ci.yml             # Quality control
+│   └── cd.yml             # Automated releases
+├── config.example.json     # Example configuration
+├── pyproject.toml          # Project metadata & dependencies
+└── README.md              # This file
+```
+
+### Reporting Issues
+
+When reporting bugs, please include:
+- Python version
+- Operating system
+- Full error message and stack trace
+- Steps to reproduce the issue
+- Your configuration (with credentials redacted)
+
+### Submitting Pull Requests
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Make your changes
+4. Run quality checks (`poetry run pre-commit run --all-files`)
+5. Commit your changes (use [conventional commits](https://www.conventionalcommits.org/))
+6. Push to your fork (`git push origin feature/amazing-feature`)
+7. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License - see the LICENSE file for details.
 
 ## Acknowledgments
 
