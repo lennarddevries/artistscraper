@@ -86,9 +86,6 @@ skipped_artists.log
 Thumbs.db
 *.bak
 
-# Claude Code
-.claude/
-
 # Jupyter Notebook
 .ipynb_checkpoints
 
@@ -96,3 +93,6 @@ Thumbs.db
 test_*.py
 check_*.py
 debug_*.py
+
+# MkDocs build output
+site/

@@ -1,0 +1,87 @@
+site_name: Artist Scraper
+site_description: Fetch artists from YouTube Music and Spotify with MusicBrainz IDs
+site_author: lennarddevries
+site_url: https://lennarddevries.github.io/artistscraper/
+repo_name: lennarddevries/artistscraper
+repo_url: https://github.com/lennarddevries/artistscraper
+edit_uri: ""
+docs_dir: docs_site
+
+theme:
+  name: material
+  palette:
+    # Light mode
+    - scheme: default
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    # Dark mode
+    - scheme: slate
+      primary: indigo
+      accent: indigo
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.instant
+    - navigation.tracking
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.top
+    - search.suggest
+    - search.highlight
+    - content.code.copy
+    - content.code.annotate
+
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight:
+      anchor_linenums: true
+  - pymdownx.inlinehilite
+  - pymdownx.snippets
+  - pymdownx.tabbed:
+      alternate_style: true
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+
+plugins:
+  - search
+  - git-revision-date-localized:
+      enable_creation_date: true
+
+nav:
+  - Home: index.md
+  - Installation:
+      - Quick Start: installation/quick-start.md
+      - From PyPI: installation/pypi.md
+      - From Source: installation/source.md
+  - Configuration:
+      - Overview: configuration/overview.md
+      - Spotify: configuration/spotify.md
+      - YouTube Music: configuration/youtube-music.md
+      - MusicBrainz: configuration/musicbrainz.md
+      - Lidarr: configuration/lidarr.md
+  - Usage:
+      - Scrape Command: usage/scrape.md
+      - Import Command: usage/import.md
+      - Output Files: usage/output.md
+  - Troubleshooting: troubleshooting.md
+  - Changelog: changelog.md
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/lennarddevries/artistscraper
+    - icon: fontawesome/brands/python
+      link: https://pypi.org/project/artistscraper/
