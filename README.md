@@ -8,7 +8,7 @@ A production-ready tool to fetch artists from YouTube Music and Spotify, look up
 - Replaced unreliable ytmusicapi internal API with official YouTube Data API v3
 - Fixed HTTP 400 errors that prevented YouTube Music from working
 - Improved artist extraction from video titles and channel names
-- See [CHANGELOG_YOUTUBE_FIX.md](CHANGELOG_YOUTUBE_FIX.md) for full details
+- See [CHANGELOG_YOUTUBE_FIX.md](docs/CHANGELOG_YOUTUBE_FIX.md) for full details
 
 ## Features
 
@@ -90,7 +90,7 @@ Add to `config.json`:
 
 ### YouTube Music Configuration
 
-> **Note**: As of November 2025, the YouTube Music integration uses the **YouTube Data API v3** for better reliability. See [YOUTUBE_MUSIC_SETUP.md](YOUTUBE_MUSIC_SETUP.md) for detailed setup instructions and troubleshooting.
+> **Note**: As of November 2025, the YouTube Music integration uses the **YouTube Data API v3** for better reliability. See [YOUTUBE_MUSIC_SETUP.md](docs/YOUTUBE_MUSIC_SETUP.md) for detailed setup instructions and troubleshooting.
 
 #### Quick Setup
 
@@ -110,7 +110,7 @@ ytmusicapi oauth --client-id YOUR_CLIENT_ID --client-secret YOUR_CLIENT_SECRET
 }
 ```
 
-For detailed instructions, troubleshooting, and information about the recent API changes, see [YOUTUBE_MUSIC_SETUP.md](YOUTUBE_MUSIC_SETUP.md).
+For detailed instructions, troubleshooting, and information about the recent API changes, see [YOUTUBE_MUSIC_SETUP.md](docs/YOUTUBE_MUSIC_SETUP.md).
 
 ### MusicBrainz Configuration
 
@@ -272,13 +272,13 @@ Make sure you've created `config.json` with `artistscraper print-config > config
 - Run `ytmusicapi oauth --client-id YOUR_ID --client-secret YOUR_SECRET` to regenerate authentication
 - Make sure the auth file path in `config.json` matches the generated file
 - Ensure YouTube Data API v3 is enabled in your Google Cloud project
-- See [YOUTUBE_MUSIC_SETUP.md](YOUTUBE_MUSIC_SETUP.md) for detailed troubleshooting
+- See [YOUTUBE_MUSIC_SETUP.md](docs/YOUTUBE_MUSIC_SETUP.md) for detailed troubleshooting
 
 ### "HTTP 400: Bad Request" from YouTube Music
 This error was fixed in the November 2025 update. If you're still seeing it:
 - Make sure you have the latest version of the code
 - Regenerate your OAuth token with your Google Cloud credentials
-- See [CHANGELOG_YOUTUBE_FIX.md](CHANGELOG_YOUTUBE_FIX.md) for migration instructions
+- See [CHANGELOG_YOUTUBE_FIX.md](docs/CHANGELOG_YOUTUBE_FIX.md) for migration instructions
 
 ### "HTTP 403: Forbidden" from YouTube Music
 - YouTube Data API v3 is not enabled in your Google Cloud project
