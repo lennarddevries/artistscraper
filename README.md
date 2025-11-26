@@ -64,7 +64,7 @@ Before using the tool, you need to set up your API credentials.
 
 1. Create a configuration file:
 ```bash
-cp config.example.json config.json
+artistscraper print-config > config.json
 ```
 
 2. Edit `config.json` with your credentials (see sections below)
@@ -262,7 +262,7 @@ When using the `--lidarr` flag:
 ## Troubleshooting
 
 ### "Configuration file not found"
-Make sure you've copied `config.example.json` to `config.json` and filled in your credentials.
+Make sure you've created `config.json` with `artistscraper print-config > config.json` and filled in your credentials.
 
 ### "Failed to authenticate with Spotify"
 - Verify your `client_id`, `client_secret`, and `refresh_token` are correct

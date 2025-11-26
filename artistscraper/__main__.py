@@ -1,6 +1,7 @@
 """Artist Scraper - Fetch artists from YouTube Music and Spotify."""
 
 import csv
+import json
 import logging
 import sys
 from pathlib import Path
@@ -34,6 +35,31 @@ app = typer.Typer(
 )
 
 console = Console()
+
+# Example configuration template
+EXAMPLE_CONFIG = {
+    "spotify": {
+        "client_id": "your_spotify_client_id_here",
+        "client_secret": "your_spotify_client_secret_here",
+        "refresh_token": "your_spotify_refresh_token_here",
+    },
+    "youtube_music": {
+        "auth_file": "ytmusic_auth.json",
+        "client_id": "your_google_client_id_here (optional)",
+        "client_secret": "your_google_client_secret_here (optional)",
+    },
+    "lidarr": {
+        "url": "http://localhost:8686",
+        "api_key": "your_lidarr_api_key_here",
+    },
+    "musicbrainz": {
+        "user_agent": "artistscraper/0.1.0 (your-email@example.com)",
+    },
+    "output": {
+        "csv_file": "artists.csv",
+        "skipped_log": "skipped_artists.log",
+    },
+}
 
 
 @app.command(name="scrape")
@@ -636,6 +662,12 @@ def import_csv(
     console.print(
         Panel.fit("[bold green]✓ Import completed![/bold green]", border_style="green")
     )
+
+
+@app.command(name="print-config")
+def print_config() -> None:
+    """Print example configuration to stdout."""
+    print(json.dumps(EXAMPLE_CONFIG, indent=2))
 
 
 def cli_main():

@@ -23,7 +23,7 @@ class Config:
         if not self.config_path.exists():
             raise FileNotFoundError(
                 f"Configuration file not found: {self.config_path}\n"
-                f"Please copy config.example.json to config.json and fill in your credentials."
+                f"Run 'artistscraper print-config > config.json' to create a config file, then fill in your credentials."
             )
 
         with open(self.config_path) as f:
