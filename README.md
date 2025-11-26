@@ -1,4 +1,4 @@
-# Artist Scraper [![Build](https://github.com/lennarddevries/artistscraper/actions/workflows/ci.yml/badge.svg)](https://github.com/lennarddevries/artistscraper/actions/workflows/ci.yml) [![PyPI](https://img.shields.io/pypi/v/artistscraper.svg)](https://pypi.org/project/artistscraper/)
+# Artist Scraper [![Build](https://github.com/lennarddevries/artistscraper/actions/workflows/ci.yml/badge.svg)](https://github.com/lennarddevries/artistscraper/actions/workflows/ci.yml) [![PyPI](https://img.shields.io/pypi/v/artistscraper.svg)](https://pypi.org/project/artistscraper/) [![Buy Me A Coffee](https://img.shields.io/badge/Buy%20Me%20A%20Coffee-Support-yellow?logo=buy-me-a-coffee)](https://www.buymeacoffee.com/lennarddevries)
 
 A production-ready tool to fetch artists from YouTube Music and Spotify, look up their MusicBrainz IDs, and optionally add them to Lidarr for monitoring.
 
